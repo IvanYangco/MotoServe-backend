@@ -1,0 +1,78 @@
+===== .NET / ASP.NET Core build outputs =====
+bin/
+obj/
+out/
+
+===== User-specific files =====
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+===== Visual Studio / VS Code files =====
+.vscode/
+.vs/
+.idea/
+*.ncrunchproject
+*.ncrunchsolution
+*.sln.iml
+
+===== Logs and temp =====
+*.log
+*.tlog
+*.tmp
+*.temp
+.bak
+
+===== Secrets and local settings =====
+appsettings.Development.json
+appsettings.Local.json
+appsettings..json
+.env
+.env
+
+===== Database and Migrations =====
+*.mdf
+*.ldf
+*.db
+*.sqlite
+*.bak
+Migrations/
+
+===== OS generated files =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+===== Publish outputs =====
+publish/
+wwwroot/
+node_modules/
+dist/
+
+===== Tool configs =====
+*.swp
+*.lock.json
+project.lock.json
+
+===== Rider / JetBrains =====
+.idea/
+.iml
+
+===== ReSharper =====
+_ReSharper/
+*.[Rr]e[Ss]harper
+*.DotSettings.user
+
+===== Backup files =====
+*~
+*.orig
+
+===== Optional keep =====
+!Controllers/
+!Models/
+!Data/
+!Properties/
+!Program.cs
+!backend.csproj
+!appsettings.json
