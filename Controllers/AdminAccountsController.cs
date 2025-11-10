@@ -65,7 +65,7 @@ namespace backend.Controllers
                     Lastname = dto.Lastname
                 }
             };
-
+            
             Console.WriteLine(account.AdminId);
             // Add and save both entities in one go
             _context.AdminAccounts.Add(account);

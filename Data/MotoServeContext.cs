@@ -87,7 +87,7 @@ public partial class MotoServeContext : DbContext
         modelBuilder.Entity<Customer>(entity =>
         {
             entity.HasKey(e => e.CustomerId);
-            entity.ToTable("Customer");
+            entity.ToTable("Customers");
 
             entity.Property(e => e.CustomerId).HasColumnName("customer_id");
             entity.Property(e => e.Firstname).HasMaxLength(100).IsUnicode(false).HasColumnName("firstname");

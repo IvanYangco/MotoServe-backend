@@ -1,163 +1,124 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
 
 namespace backend.Controllers
 {
-    public class CustomersAccountsController : Controller
+    public class CreateCustomerAccountDto
+    {
+        public string? Email { get; set; }
+        public string? Password { get; set; }
+        public string? Username { get; set; }
+        public string? Firstname { get; set; }
+        public string? Lastname { get; set; }
+        public string? PhoneNumber { get; set; }
+
+        public Customer? Customer { get; set; }
+    }
+
+    [ApiController]
+    [Route("api/[controller]")]
+    public class CustomerAccountsController : Controller
     {
         private readonly MotoServeContext _context;
 
-        public CustomersAccountsController(MotoServeContext context)
+        public CustomerAccountsController(MotoServeContext context)
         {
             _context = context;
         }
 
-        // GET: CustomersAccounts
-        public async Task<IActionResult> Index()
+        // GET: api/customeraccounts
+        [HttpGet]
+        public async Task<IActionResult> GetCustomerAccounts()
         {
-            var motoServeContext = _context.CustomerAccounts.Include(c => c.Customer);
-            return View(await motoServeContext.ToListAsync());
-        }
-
-        // GET: CustomersAccounts/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var customerAccount = await _context.CustomerAccounts
-                .Include(c => c.Customer)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (customerAccount == null)
-            {
-                return NotFound();
-            }
-
-            return View(customerAccount);
-        }
-
-        // GET: CustomersAccounts/Create
-        public IActionResult Create()
-        {
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId");
-            return View();
-        }
-
-        // POST: CustomersAccounts/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Email,Password,CustomerId")] CustomerAccount customerAccount)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(customerAccount);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", customerAccount.CustomerId);
-            return View(customerAccount);
-        }
-
-        // GET: CustomersAccounts/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var customerAccount = await _context.CustomerAccounts.FindAsync(id);
-            if (customerAccount == null)
-            {
-                return NotFound();
-            }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", customerAccount.CustomerId);
-            return View(customerAccount);
-        }
-
-        // POST: CustomersAccounts/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Email,Password,CustomerId")] CustomerAccount customerAccount)
-        {
-            if (id != customerAccount.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
+            var customerAccounts = await _context.CustomerAccounts
+                .Include(ca => ca.Customer)
+                .Select(ca => new
                 {
-                    _context.Update(customerAccount);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
+                    id = ca.Id,
+                    email = ca.Email,
+                    username = ca.Customer.Username,
+                    firstname = ca.Customer.Firstname,
+                    lastname = ca.Customer.Lastname,
+                    phone_number = ca.Customer.PhoneNumber
+                })
+                .ToListAsync();
+
+            return Ok(customerAccounts);
+        }
+
+        // POST: api/customeraccounts/create-customer-account
+        [HttpPost("create-customer-account")]
+        public async Task<IActionResult> CreateCustomerAccount([FromBody] CreateCustomerAccountDto dto)
+        {
+            if (dto == null)
+                return BadRequest("Invalid data.");
+
+            var account = new CustomerAccount
+            {
+                Email = dto.Email,
+                Password = dto.Password,
+                Customer = new Customer
                 {
-                    if (!CustomerAccountExists(customerAccount.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
+                    Username = dto.Username,
+                    Firstname = dto.Firstname,
+                    Lastname = dto.Lastname,
+                    PhoneNumber = dto.PhoneNumber
                 }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["CustomerId"] = new SelectList(_context.Customers, "CustomerId", "CustomerId", customerAccount.CustomerId);
-            return View(customerAccount);
+            };
+
+            _context.CustomerAccounts.Add(account);
+            await _context.SaveChangesAsync();
+
+            return Ok(new
+            {
+                message = "Customer account created successfully",
+                customerAccount = new
+                {
+                    id = account.Id,
+                    email = account.Email,
+                    username = account.Customer.Username,
+                    firstname = account.Customer.Firstname,
+                    lastname = account.Customer.Lastname,
+                    phone_number = account.Customer.PhoneNumber
+                }
+            });
         }
 
-        // GET: CustomersAccounts/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // PUT: api/customeraccounts/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateCustomerAccount(int id, [FromBody] CreateCustomerAccountDto dto)
         {
-            if (id == null)
-            {
+            var account = await _context.CustomerAccounts
+                .Include(ca => ca.Customer)
+                .FirstOrDefaultAsync(ca => ca.Id == id);
+
+            if (account == null)
                 return NotFound();
-            }
 
-            var customerAccount = await _context.CustomerAccounts
-                .Include(c => c.Customer)
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (customerAccount == null)
-            {
-                return NotFound();
-            }
-
-            return View(customerAccount);
-        }
-
-        // POST: CustomersAccounts/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var customerAccount = await _context.CustomerAccounts.FindAsync(id);
-            if (customerAccount != null)
-            {
-                _context.CustomerAccounts.Remove(customerAccount);
-            }
+            if (!string.IsNullOrEmpty(dto.Email)) account.Email = dto.Email;
+            if (!string.IsNullOrEmpty(dto.Password)) account.Password = dto.Password;
+            if (!string.IsNullOrEmpty(dto.Username)) account.Customer.Username = dto.Username;
+            if (!string.IsNullOrEmpty(dto.Firstname)) account.Customer.Firstname = dto.Firstname;
+            if (!string.IsNullOrEmpty(dto.Lastname)) account.Customer.Lastname = dto.Lastname;
+            if (!string.IsNullOrEmpty(dto.PhoneNumber)) account.Customer.PhoneNumber = dto.PhoneNumber;
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Ok(new { message = "Customer account updated successfully" });
         }
 
-        private bool CustomerAccountExists(int id)
+        // DELETE: api/customeraccounts/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteCustomerAccount(int id)
         {
-            return _context.CustomerAccounts.Any(e => e.Id == id);
+            var account = await _context.CustomerAccounts.FindAsync(id);
+            if (account == null)
+                return NotFound();
+
+            _context.CustomerAccounts.Remove(account);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Customer account deleted successfully" });
         }
     }
 }
