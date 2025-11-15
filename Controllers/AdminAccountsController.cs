@@ -44,7 +44,7 @@ namespace backend.Controllers
                     lastname = a.Admin.Lastname
                 })
                 .ToListAsync();
-
+                
             return Ok(adminAccounts);
         }
         [HttpPost("create-admin-account")]
