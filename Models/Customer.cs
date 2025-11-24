@@ -14,8 +14,10 @@ public partial class Customer
     public string Lastname { get; set; } = null!;
 
     public string? PhoneNumber { get; set; }
+    public string? Motorcycle { get; set; }   
+    public string? PlateNumber { get; set; } 
 
     public virtual CustomerAccount? CustomerAccount { get; set; }
 
-    public virtual ICollection<CustomerMotorcycle> CustomerMotorcycles { get; set; } = new List<CustomerMotorcycle>();
+
 }

@@ -43,6 +43,7 @@ public partial class MotoServeContext : DbContext
 
     public virtual DbSet<Receptionist> Receptionists { get; set; }
 
+
     public virtual DbSet<ReceptionistAccount> ReceptionistAccounts { get; set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
@@ -63,10 +64,7 @@ public partial class MotoServeContext : DbContext
             entity.Property(e => e.Username).HasMaxLength(100).IsUnicode(false).HasColumnName("username");
 
             entity.HasOne(e => e.AdminAccount)
-                .WithOne(a => a.Admin)
-                .HasForeignKey<AdminAccount>(a => a.AdminId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_Admin_AdminAccount");
+                .WithOne(a => a.Admin);
         });
 
         modelBuilder.Entity<AdminAccount>(entity =>
@@ -94,12 +92,11 @@ public partial class MotoServeContext : DbContext
             entity.Property(e => e.Lastname).HasMaxLength(100).IsUnicode(false).HasColumnName("lastname");
             entity.Property(e => e.PhoneNumber).HasMaxLength(50).IsUnicode(false).HasColumnName("phone_number");
             entity.Property(e => e.Username).HasMaxLength(100).IsUnicode(false).HasColumnName("username");
+            entity.Property(e => e.Motorcycle).HasMaxLength(50).IsUnicode(false).HasColumnName("motorcycle");
+            entity.Property(e => e.PlateNumber).HasMaxLength(100).IsUnicode(false).HasColumnName("plate_number");
 
             entity.HasOne(e => e.CustomerAccount)
-                .WithOne(a => a.Customer)
-                .HasForeignKey<CustomerAccount>(a => a.CustomerId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_Customer_CustomerAccount");
+                .WithOne(a => a.Customer);
         });
 
         modelBuilder.Entity<CustomerAccount>(entity =>
@@ -117,22 +114,40 @@ public partial class MotoServeContext : DbContext
         });
 
         modelBuilder.Entity<CustomerMotorcycle>(entity =>
-        {
-            entity.HasKey(e => e.MotorcycleId);
-            entity.ToTable("CustomerMotorcycle");
+{
+    entity.HasKey(e => e.CustomerMotorcycleId);
+    entity.ToTable("CustomerMotorcycle");
 
-            entity.Property(e => e.MotorcycleId).HasColumnName("motorcycle_id");
-            entity.Property(e => e.CustomerId).HasColumnName("customer_id");
-            entity.Property(e => e.MotorBrand).HasMaxLength(100).IsUnicode(false).HasColumnName("motor_brand");
-            entity.Property(e => e.MotorModel).HasMaxLength(100).IsUnicode(false).HasColumnName("motor_model");
-            entity.Property(e => e.MotorStatus).HasMaxLength(50).IsUnicode(false).HasColumnName("motor_status");
+    entity.Property(e => e.CustomerMotorcycleId)
+        .HasColumnName("customer_motorcycle_id");
 
-            entity.HasOne(d => d.Customer)
-                .WithMany(p => p.CustomerMotorcycles)
-                .HasForeignKey(d => d.CustomerId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_CustomerMotorcycle_Customer");
-        });
+    entity.Property(e => e.CustomerId)
+        .HasColumnName("customer_id");
+
+    entity.Property(e => e.Motorcycle)
+        .HasMaxLength(200)        // optional
+        .IsUnicode(false)         // optional
+        .HasColumnName("motorcycle");
+
+    entity.Property(e => e.PlateNumber)
+        .HasMaxLength(50)         // optional
+        .IsUnicode(false)         // optional
+        .HasColumnName("plate_number");
+
+ 
+});
+
+modelBuilder.Entity<MaintenanceSchedule>(entity =>
+{
+    entity.HasKey(e => e.ScheduleId);
+    entity.ToTable("MaintenanceSchedule");
+
+    entity.Property(e => e.ScheduleId).HasColumnName("schedule_id");
+    entity.Property(e => e.Date).HasColumnName("date");
+    entity.Property(e => e.Time).HasColumnName("time");
+  
+    entity.Property(e => e.MechanicId).HasColumnName("mechanic_id");
+});
 
         // INVENTORY
         modelBuilder.Entity<Inventory>(entity =>
@@ -147,21 +162,23 @@ public partial class MotoServeContext : DbContext
             entity.Property(e => e.TotalProfit).HasColumnType("decimal(10, 2)").HasColumnName("total_profit");
         });
 
-        // MAINTENANCE SCHEDULE
-        modelBuilder.Entity<MaintenanceSchedule>(entity =>
-        {
-            entity.HasKey(e => e.ScheduleId);
-            entity.ToTable("MaintenanceSchedule");
+        // MAINTENANCE HISTORY
+modelBuilder.Entity<MaintenanceHistory>(entity =>
+{
+    entity.HasKey(e => e.HistoryId);
+    entity.ToTable("MaintenanceHistory");
 
-            entity.Property(e => e.ScheduleId).HasColumnName("schedule_id");
-            entity.Property(e => e.Date).HasColumnName("date");
-            entity.Property(e => e.Time).HasColumnName("time");
-            entity.Property(e => e.Status)
-                .HasMaxLength(50)
-                .IsUnicode(false)
-                .HasDefaultValue("Pending")
-                .HasColumnName("status");
-        });
+    entity.Property(e => e.HistoryId).HasColumnName("history_id");
+    entity.Property(e => e.CustomerId).HasColumnName("customer_id");
+    entity.Property(e => e.MechanicId).HasColumnName("mechanic_id");
+    entity.Property(e => e.MaintenanceTypeId).HasColumnName("maintenance_type_id");
+    entity.Property(e => e.CustomerMotorcycleId).HasColumnName("customer_motorcycle_id");
+    entity.Property(e => e.ScheduleId).HasColumnName("schedule_id");
+    entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)").HasColumnName("amount");
+
+ 
+});
+
 
         // MAINTENANCE TYPE
         modelBuilder.Entity<MaintenanceType>(entity =>
@@ -175,35 +192,13 @@ public partial class MotoServeContext : DbContext
             entity.Property(e => e.BasePrice).HasColumnType("decimal(10, 2)").HasColumnName("base_price");
             entity.Property(e => e.MechanicId).HasColumnName("mechanic_id");
 
-            entity.HasOne(d => d.Mechanic)
-                .WithMany(p => p.MaintenanceTypes)
-                .HasForeignKey(d => d.MechanicId)
-                .OnDelete(DeleteBehavior.SetNull)
-                .HasConstraintName("FK_MaintenanceType_Mechanic");
+            // entity.HasOne(d => d.Mechanic)
+            //     .WithMany(p => p.MaintenanceTypes)
+            //     .HasForeignKey(d => d.MechanicId)
+            //     .OnDelete(DeleteBehavior.SetNull)
+            //     .HasConstraintName("FK_MaintenanceType_Mechanic");
         });
 
-        // MAINTENANCE TYPE ASSIGNMENT (many-to-many)
-        modelBuilder.Entity<MaintenanceTypeAssignment>(entity =>
-        {
-            entity.HasKey(e => e.Id);
-            entity.ToTable("MaintenanceTypeAssignment");
-
-            entity.Property(e => e.Id).HasColumnName("id");
-            entity.Property(e => e.MaintenanceTypeId).HasColumnName("maintenance_type_id");
-            entity.Property(e => e.ScheduleId).HasColumnName("schedule_id");
-
-            entity.HasOne(d => d.MaintenanceType)
-                .WithMany(p => p.MaintenanceTypeAssignments)
-                .HasForeignKey(d => d.MaintenanceTypeId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_MaintenanceTypeAssignment_MaintenanceType");
-
-            entity.HasOne(d => d.MaintenanceSchedule)
-                .WithMany(p => p.MaintenanceTypeAssignments)
-                .HasForeignKey(d => d.ScheduleId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_MaintenanceTypeAssignment_MaintenanceSchedule");
-        });
 
         // MECHANIC + ACCOUNT
         modelBuilder.Entity<Mechanic>(entity =>
@@ -216,6 +211,12 @@ public partial class MotoServeContext : DbContext
             entity.Property(e => e.Lastname).HasMaxLength(100).IsUnicode(false).HasColumnName("lastname");
             entity.Property(e => e.PhoneNumber).HasMaxLength(50).IsUnicode(false).HasColumnName("phone_number");
             entity.Property(e => e.MotorExpertise).HasMaxLength(100).IsUnicode(false).HasColumnName("motor_expertise");
+            // entity.Property(e => e.ScheduleId).HasColumnName("schedule_id");
+            entity.HasOne<MaintenanceSchedule>()  // if you need relationship
+            .WithMany()
+            // .HasForeignKey(e => e.ScheduleId)
+            .OnDelete(DeleteBehavior.Restrict);
+
 
             entity.HasOne(e => e.MechanicAccount)
                 .WithOne(a => a.Mechanic)
@@ -223,6 +224,35 @@ public partial class MotoServeContext : DbContext
                 .OnDelete(DeleteBehavior.Cascade)
                 .HasConstraintName("FK_Mechanic_MechanicAccount");
         });
+        
+// // 🔹 MaintenanceHistory has NO ScheduleId anymore
+// modelBuilder.Entity<MaintenanceHistory>(entity =>
+// {
+//     entity.HasKey(e => e.HistoryId);
+//     entity.ToTable("MaintenanceHistory");
+
+//     entity.Property(e => e.HistoryId).HasColumnName("history_id");
+//     entity.Property(e => e.CustomerId).HasColumnName("customer_id");
+//     entity.Property(e => e.MechanicId).HasColumnName("mechanic_id");
+//     entity.Property(e => e.MaintenanceTypeId).HasColumnName("maintenance_type_id");
+//     entity.Property(e => e.CustomerMotorcycleId).HasColumnName("customer_motorcycle_id");
+//     entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)").HasColumnName("amount");
+
+//     // VALID relationships 👇
+//     entity.HasOne(e => e.Customer)
+//         .WithMany(c => c.MaintenanceHistories)
+//         .HasForeignKey(e => e.CustomerId);
+
+//     entity.HasOne(e => e.Mechanic)
+//         .WithMany(m => m.MaintenanceHistories)
+//         .HasForeignKey(e => e.MechanicId);
+
+//     entity.HasOne(e => e.MaintenanceType)
+//         .WithMany(t => t.MaintenanceHistories)
+//         .HasForeignKey(e => e.MaintenanceTypeId);
+
+    
+// });
 
         modelBuilder.Entity<MechanicAccount>(entity =>
         {
@@ -251,11 +281,7 @@ public partial class MotoServeContext : DbContext
             entity.Property(e => e.MaintenanceId).HasColumnName("maintenance_id");
             entity.Property(e => e.Due).HasColumnName("due");
 
-            entity.HasOne(d => d.Maintenance)
-                .WithMany(p => p.PaymentTables)
-                .HasForeignKey(d => d.MaintenanceId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_PaymentTable_Maintenance");
+            
         });
 
         // RECEPTIONIST + ACCOUNT

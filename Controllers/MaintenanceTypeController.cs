@@ -1,14 +1,20 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
 
 namespace backend.Controllers
 {
+    public class CreateMaintenanceTypeDto
+    {
+        public string? MaintenanceName { get; set; }
+        public string? Description { get; set; }
+        public decimal BasePrice { get; set; }
+        public int? MechanicId { get; set; }
+        public Mechanic? Mechanics { get; set; }
+    }
+
+    [ApiController]
+    [Route("api/[controller]")]
     public class MaintenanceTypeController : Controller
     {
         private readonly MotoServeContext _context;
@@ -18,146 +24,87 @@ namespace backend.Controllers
             _context = context;
         }
 
-        // GET: MaintenanceType
-        public async Task<IActionResult> Index()
+        // GET: api/maintenancetype
+        [HttpGet]
+        public async Task<IActionResult> GetMaintenanceTypes()
         {
-            var motoServeContext = _context.MaintenanceTypes.Include(m => m.Mechanic);
-            return View(await motoServeContext.ToListAsync());
+            var types = await _context.MaintenanceTypes
+                .Include(mt => mt.Mechanic)
+               // Change mechanic → Mechanics
+.Select(mt => new
+{
+    maintenanceId = mt.MaintenanceId,
+    maintenanceName = mt.MaintenanceName,
+    description = mt.Description,
+    basePrice = mt.BasePrice,
+    Mechanics = mt.Mechanic == null ? null : new  // change property name here
+    {
+        mechanicId = mt.Mechanic.MechanicId,
+        firstname = mt.Mechanic.Firstname,
+        lastname = mt.Mechanic.Lastname,
+        expertise = mt.Mechanic.MotorExpertise
+    }
+})
+
+
+                .ToListAsync();
+
+            return Ok(types);
         }
 
-        // GET: MaintenanceType/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var maintenanceType = await _context.MaintenanceTypes
-                .Include(m => m.Mechanic)
-                .FirstOrDefaultAsync(m => m.MaintenanceId == id);
-            if (maintenanceType == null)
-            {
-                return NotFound();
-            }
-
-            return View(maintenanceType);
-        }
-
-        // GET: MaintenanceType/Create
-        public IActionResult Create()
-        {
-            ViewData["MechanicId"] = new SelectList(_context.Mechanics, "MechanicId", "MechanicId");
-            return View();
-        }
-
-        // POST: MaintenanceType/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
+        // POST: api/maintenancetype
         [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("MaintenanceId,MaintenanceName,BasePrice,Description,MechanicId")] MaintenanceType maintenanceType)
+        public async Task<IActionResult> CreateMaintenanceType([FromBody] CreateMaintenanceTypeDto dto)
         {
-            if (ModelState.IsValid)
+            if (dto == null)
+                return BadRequest("Invalid data.");
+
+            var type = new MaintenanceType
             {
-                _context.Add(maintenanceType);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["MechanicId"] = new SelectList(_context.Mechanics, "MechanicId", "MechanicId", maintenanceType.MechanicId);
-            return View(maintenanceType);
+                MaintenanceName = dto.MaintenanceName,
+                Description = dto.Description,
+                BasePrice = dto.BasePrice,
+                MechanicId = dto.MechanicId
+            };
+
+            _context.MaintenanceTypes.Add(type);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Maintenance type created successfully" });
         }
 
-        // GET: MaintenanceType/Edit/5
-        public async Task<IActionResult> Edit(int? id)
+        // PUT: api/maintenancetype/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateMaintenanceType(int id, [FromBody] CreateMaintenanceTypeDto dto)
         {
-            if (id == null)
-            {
+            var type = await _context.MaintenanceTypes.FindAsync(id);
+
+            if (type == null)
                 return NotFound();
-            }
 
-            var maintenanceType = await _context.MaintenanceTypes.FindAsync(id);
-            if (maintenanceType == null)
-            {
-                return NotFound();
-            }
-            ViewData["MechanicId"] = new SelectList(_context.Mechanics, "MechanicId", "MechanicId", maintenanceType.MechanicId);
-            return View(maintenanceType);
-        }
-
-        // POST: MaintenanceType/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("MaintenanceId,MaintenanceName,BasePrice,Description,MechanicId")] MaintenanceType maintenanceType)
-        {
-            if (id != maintenanceType.MaintenanceId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(maintenanceType);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!MaintenanceTypeExists(maintenanceType.MaintenanceId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            ViewData["MechanicId"] = new SelectList(_context.Mechanics, "MechanicId", "MechanicId", maintenanceType.MechanicId);
-            return View(maintenanceType);
-        }
-
-        // GET: MaintenanceType/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var maintenanceType = await _context.MaintenanceTypes
-                .Include(m => m.Mechanic)
-                .FirstOrDefaultAsync(m => m.MaintenanceId == id);
-            if (maintenanceType == null)
-            {
-                return NotFound();
-            }
-
-            return View(maintenanceType);
-        }
-
-        // POST: MaintenanceType/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
-        {
-            var maintenanceType = await _context.MaintenanceTypes.FindAsync(id);
-            if (maintenanceType != null)
-            {
-                _context.MaintenanceTypes.Remove(maintenanceType);
-            }
+            if (!string.IsNullOrEmpty(dto.MaintenanceName)) type.MaintenanceName = dto.MaintenanceName;
+            if (!string.IsNullOrEmpty(dto.Description)) type.Description = dto.Description;
+            type.BasePrice = dto.BasePrice;
+            type.MechanicId = dto.MechanicId;
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return Ok(new { message = "Maintenance type updated successfully" });
         }
 
-        private bool MaintenanceTypeExists(int id)
+        // DELETE: api/maintenancetype/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteMaintenanceType(int id)
         {
-            return _context.MaintenanceTypes.Any(e => e.MaintenanceId == id);
+            var type = await _context.MaintenanceTypes.FindAsync(id);
+
+            if (type == null)
+                return NotFound();
+
+            _context.MaintenanceTypes.Remove(type);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Maintenance type deleted successfully" });
         }
     }
 }

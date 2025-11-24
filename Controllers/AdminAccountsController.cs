@@ -48,6 +48,7 @@ namespace backend.Controllers
             return Ok(adminAccounts);
         }
         [HttpPost("create-admin-account")]
+        
         public async Task<IActionResult> CreateAdminAccount([FromBody] CreateAdminAccountDto dto)
         {
             if (dto == null)

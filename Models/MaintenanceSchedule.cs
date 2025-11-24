@@ -5,15 +5,23 @@ namespace backend.Models;
 
 public partial class MaintenanceSchedule
 {
-    public int ScheduleId { get; set; }
+    
+    // int HistoryId { get; set; }
 
+    //public int? CustomerId { get; set; }
+    public int? MechanicId { get; set; }
+    //public int? MaintenanceTypeId { get; set; }
+   // public int? CustomerMotorcycleId { get; set; }
+
+    public int? ScheduleId { get; set; }  
+    //public virtual MaintenanceSchedule? MaintenanceSchedule1 { get; set; }  // 🔥 ADD THIS
     public DateOnly Date { get; set; }
-
     public TimeOnly Time { get; set; }
+    //public decimal Amount { get; set; }
 
-    public string? Status { get; set; }
-
-    public virtual ICollection<MaintenanceHistory> MaintenanceHistories { get; set; } = new List<MaintenanceHistory>();
-    public virtual ICollection<MaintenanceTypeAssignment> MaintenanceTypeAssignments { get; set; } = new List<MaintenanceTypeAssignment>();
-
+    //public virtual Customer? Customer { get; set; }
+    public virtual Mechanic? Mechanic { get; set; }
+    //public virtual MaintenanceType? MaintenanceType { get; set; }
+    //public virtual CustomerMotorcycle? CustomerMotorcycle { get; set; }
 }
+

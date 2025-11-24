@@ -1,15 +1,22 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
+
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
 
+
+
 namespace backend.Controllers
 {
-    public class MaintenanceScheduleController : Controller
+    public class CreateScheduleDto
+    {
+        public DateOnly Date { get; set; }
+        public TimeOnly Time { get; set; }
+        public int MechanicId { get; set; }
+    }
+
+    [ApiController]
+    [Route("api/[controller]")]
+    public class MaintenanceScheduleController : ControllerBase
     {
         private readonly MotoServeContext _context;
 
@@ -17,140 +24,81 @@ namespace backend.Controllers
         {
             _context = context;
         }
-
-        // GET: MaintenanceSchedule
-        public async Task<IActionResult> Index()
+        
+        // 🔹 GET: api/maintenanceschedule
+        [HttpGet]
+        public async Task<IActionResult> GetSchedules()
         {
-            return View(await _context.MaintenanceSchedules.ToListAsync());
-        }
-
-        // GET: MaintenanceSchedule/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var maintenanceSchedule = await _context.MaintenanceSchedules
-                .FirstOrDefaultAsync(m => m.ScheduleId == id);
-            if (maintenanceSchedule == null)
-            {
-                return NotFound();
-            }
-
-            return View(maintenanceSchedule);
-        }
-
-        // GET: MaintenanceSchedule/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: MaintenanceSchedule/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("ScheduleId,Date,Time,Status")] MaintenanceSchedule maintenanceSchedule)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(maintenanceSchedule);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(maintenanceSchedule);
-        }
-
-        // GET: MaintenanceSchedule/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var maintenanceSchedule = await _context.MaintenanceSchedules.FindAsync(id);
-            if (maintenanceSchedule == null)
-            {
-                return NotFound();
-            }
-            return View(maintenanceSchedule);
-        }
-
-        // POST: MaintenanceSchedule/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("ScheduleId,Date,Time,Status")] MaintenanceSchedule maintenanceSchedule)
-        {
-            if (id != maintenanceSchedule.ScheduleId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
+            var schedules = await _context.MaintenanceSchedules
+                .Include(s => s.Mechanic)
+                .Select(s => new
                 {
-                    _context.Update(maintenanceSchedule);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!MaintenanceScheduleExists(maintenanceSchedule.ScheduleId))
+                    s.ScheduleId,
+                    Date = s.Date.ToString(),
+                    Time = s.Time.ToString(),
+                    
+                    Mechanic = s.Mechanic == null ? null :
+                    new
                     {
-                        return NotFound();
+                        s.Mechanic.MechanicId,
+                        s.Mechanic.Firstname,
+                        s.Mechanic.Lastname,
+                        s.Mechanic.MotorExpertise
                     }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(maintenanceSchedule);
+                })
+                .ToListAsync();
+
+            return Ok(schedules);
         }
 
-        // GET: MaintenanceSchedule/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+       
+        [HttpPost("create")]
+        public async Task<IActionResult> CreateSchedule([FromBody] CreateScheduleDto dto)
         {
-            if (id == null)
+            if (dto == null) return BadRequest("Invalid data.");
+
+            
+            var conflict = await _context.MaintenanceSchedules
+                .FirstOrDefaultAsync(s => s.Date == dto.Date && s.Time == dto.Time && s.MechanicId == dto.MechanicId);
+
+            if (conflict != null)
             {
-                return NotFound();
+                return BadRequest("This mechanic is already booked at this date & time.");
             }
 
-            var maintenanceSchedule = await _context.MaintenanceSchedules
-                .FirstOrDefaultAsync(m => m.ScheduleId == id);
-            if (maintenanceSchedule == null)
-            {
-                return NotFound();
-            }
-
-            return View(maintenanceSchedule);
-        }
-
-        // POST: MaintenanceSchedule/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+            var schedule = new backend.Models.MaintenanceSchedule
         {
-            var maintenanceSchedule = await _context.MaintenanceSchedules.FindAsync(id);
-            if (maintenanceSchedule != null)
-            {
-                _context.MaintenanceSchedules.Remove(maintenanceSchedule);
-            }
+            Date = dto.Date,
+            Time = dto.Time,
+            
+            MechanicId = dto.MechanicId 
+        };
 
+
+            _context.MaintenanceSchedules.Add(schedule);
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
-        }
 
-        private bool MaintenanceScheduleExists(int id)
+            return Ok(new { message = "Schedule created successfully!" });
+            
+        }
+         public class MaintScheduleDto
+    {
+        public DateOnly Date { get; set; }
+        public TimeOnly Time { get; set; }
+        public int MechanicId { get; set; }
+    }
+
+        // 🔹 DELETE: api/maintenanceschedule/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteSchedule(int id)
         {
-            return _context.MaintenanceSchedules.Any(e => e.ScheduleId == id);
+            var schedule = await _context.MaintenanceSchedules.FindAsync(id);
+            if (schedule == null) return NotFound();
+
+            _context.MaintenanceSchedules.Remove(schedule);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Schedule deleted successfully!" });
         }
     }
 }

@@ -1,15 +1,12 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
 
 namespace backend.Controllers
 {
-    public class MechanicController : Controller
+    [ApiController]
+    [Route("api/[controller]")]  // 🔥 USE THIS IN REACT
+    public class MechanicController : ControllerBase
     {
         private readonly MotoServeContext _context;
 
@@ -18,139 +15,69 @@ namespace backend.Controllers
             _context = context;
         }
 
-        // GET: Mechanic
-        public async Task<IActionResult> Index()
+        // 🔹 GET ALL MECHANICS  → /api/Mechanic
+        [HttpGet]
+        public async Task<IActionResult> GetMechanics()
         {
-            return View(await _context.Mechanics.ToListAsync());
+            var mechanics = await _context.Mechanics.ToListAsync();
+            return Ok(mechanics);   // return JSON
         }
 
-        // GET: Mechanic/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
+        // 🔹 GET BY ID → /api/Mechanic/5
+       [HttpGet("{id:int}")]   // now ASP.NET will ONLY match integers
+public async Task<IActionResult> GetMechanic(int id)
 
-            var mechanic = await _context.Mechanics
-                .FirstOrDefaultAsync(m => m.MechanicId == id);
-            if (mechanic == null)
-            {
-                return NotFound();
-            }
-
-            return View(mechanic);
-        }
-
-        // GET: Mechanic/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Mechanic/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("MechanicId,Firstname,Lastname,PhoneNumber,MotorExpertise")] Mechanic mechanic)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(mechanic);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(mechanic);
-        }
-
-        // GET: Mechanic/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var mechanic = await _context.Mechanics.FindAsync(id);
-            if (mechanic == null)
-            {
-                return NotFound();
-            }
-            return View(mechanic);
-        }
-
-        // POST: Mechanic/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("MechanicId,Firstname,Lastname,PhoneNumber,MotorExpertise")] Mechanic mechanic)
-        {
-            if (id != mechanic.MechanicId)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
-                {
-                    _context.Update(mechanic);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!MechanicExists(mechanic.MechanicId))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(mechanic);
-        }
-
-        // GET: Mechanic/Delete/5
-        public async Task<IActionResult> Delete(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var mechanic = await _context.Mechanics
-                .FirstOrDefaultAsync(m => m.MechanicId == id);
-            if (mechanic == null)
-            {
-                return NotFound();
-            }
-
-            return View(mechanic);
-        }
-
-        // POST: Mechanic/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
         {
             var mechanic = await _context.Mechanics.FindAsync(id);
-            if (mechanic != null)
-            {
-                _context.Mechanics.Remove(mechanic);
-            }
+            if (mechanic == null) return NotFound();
+            return Ok(mechanic);
+        }
+
+        [HttpPost("create")]
+public async Task<IActionResult> CreateMechanic([FromBody] Mechanic mechanic)
+{
+    try
+    {
+        if (mechanic == null) return BadRequest("Invalid data.");
+
+        _context.Mechanics.Add(mechanic);
+        await _context.SaveChangesAsync();
+
+        return Ok(mechanic);  // 👈 RETURN THE FULL OBJECT WITH ID
+    }
+    catch (Exception ex)
+    {
+        return StatusCode(500, new { message = "Error", details = ex.Message });
+    }
+}
+
+        // 🔹 UPDATE → /api/Mechanic/5
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateMechanic(int id, [FromBody] Mechanic dto)
+        {
+            var mechanic = await _context.Mechanics.FindAsync(id);
+            if (mechanic == null) return NotFound();
+
+            mechanic.Firstname = dto.Firstname;
+            mechanic.Lastname = dto.Lastname;
+            mechanic.PhoneNumber = dto.PhoneNumber;
+            mechanic.MotorExpertise = dto.MotorExpertise;
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+            return Ok(new { message = "Mechanic updated successfully!" });
         }
 
-        private bool MechanicExists(int id)
+        // 🔹 DELETE → /api/Mechanic/5
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteMechanic(int id)
         {
-            return _context.Mechanics.Any(e => e.MechanicId == id);
+            var mechanic = await _context.Mechanics.FindAsync(id);
+            if (mechanic == null) return NotFound();
+
+            _context.Mechanics.Remove(mechanic);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Mechanic deleted successfully!" });
         }
     }
 }

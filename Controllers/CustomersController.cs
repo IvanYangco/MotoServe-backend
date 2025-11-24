@@ -23,32 +23,6 @@ namespace backend.Controllers
             _context = context;
         }
 
-        // GET: api/customers
-        [HttpGet]
-        public async Task<IActionResult> GetCustomers()
-        {
-            var customers = await _context.Customers
-                .Include(c => c.CustomerMotorcycles)
-                .Include(c => c.CustomerAccount)
-                .Select(c => new
-                {
-                    customer_id = c.CustomerId,
-                    username = c.Username,
-                    firstname = c.Firstname,
-                    lastname = c.Lastname,
-                    phone_number = c.PhoneNumber,
-                    email = c.CustomerAccount != null ? c.CustomerAccount.Email : null,
-                    motorcycles = c.CustomerMotorcycles.Select(m => new
-                    {
-                        motor_brand = m.MotorBrand,
-                        motor_model = m.MotorModel,
-                        motor_status = m.MotorStatus
-                    })
-                })
-                .ToListAsync();
-
-            return Ok(customers);
-        }
 
         // POST: api/customers
         [HttpPost]

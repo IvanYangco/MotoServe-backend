@@ -1,23 +1,22 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-namespace backend.Models;
-
-public partial class MaintenanceType
+namespace backend.Models
 {
-    public int MaintenanceId { get; set; }
+    public class MaintenanceType
+    {
+        public int MaintenanceId { get; set; }
+        public string? MaintenanceName { get; set; }
+        public string? Description { get; set; }
+        public decimal BasePrice { get; set; }
+        public int? MechanicId { get; set; }
 
-    public string MaintenanceName { get; set; } = null!;
+        // 🔹 One Mechanic → Many MaintenanceTypes
+        public Mechanic? Mechanic { get; set; }
 
-    public decimal BasePrice { get; set; }
+        // 🔹 ADD THIS – REQUIRED for history tracking
+        // public virtual ICollection<MaintenanceHistory> MaintenanceHistories { get; set; } = new List<MaintenanceHistory>();
 
-    public string? Description { get; set; }
-
-    public int? MechanicId { get; set; }
-
-    public virtual Mechanic? Mechanic { get; set; }
-    public virtual ICollection<MaintenanceHistoryType> MaintenanceHistoryTypes { get; set; } = new List<MaintenanceHistoryType>();
-
-    public virtual ICollection<MaintenanceTypeAssignment> MaintenanceTypeAssignments { get; set; } = new List<MaintenanceTypeAssignment>();
-
+        // // 🔹 Already existing many-to-many relationship
+        // public virtual ICollection<MaintenanceTypeAssignment> MaintenanceTypeAssignments { get; set; } = new List<MaintenanceTypeAssignment>();
+    }
 }

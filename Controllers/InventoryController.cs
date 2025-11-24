@@ -1,14 +1,19 @@
-using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using Microsoft.EntityFrameworkCore;
 using backend.Models;
 
 namespace backend.Controllers
 {
+    public class CreateInventoryDto
+    {
+        public string? Material { get; set; }
+        public int Quantity { get; set; }
+        public decimal Price { get; set; }
+        public decimal TotalProfit { get; set; }
+    }
+
+    [ApiController]
+    [Route("api/[controller]")]
     public class InventoryController : Controller
     {
         private readonly MotoServeContext _context;
@@ -18,139 +23,77 @@ namespace backend.Controllers
             _context = context;
         }
 
-        // GET: Inventory
-        public async Task<IActionResult> Index()
+        // GET: api/inventory
+        [HttpGet]
+        public async Task<IActionResult> GetInventory()
         {
-            return View(await _context.Inventories.ToListAsync());
-        }
-
-        // GET: Inventory/Details/5
-        public async Task<IActionResult> Details(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var inventory = await _context.Inventories
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (inventory == null)
-            {
-                return NotFound();
-            }
-
-            return View(inventory);
-        }
-
-        // GET: Inventory/Create
-        public IActionResult Create()
-        {
-            return View();
-        }
-
-        // POST: Inventory/Create
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Create([Bind("Id,Material,Quantity,Price,TotalProfit")] Inventory inventory)
-        {
-            if (ModelState.IsValid)
-            {
-                _context.Add(inventory);
-                await _context.SaveChangesAsync();
-                return RedirectToAction(nameof(Index));
-            }
-            return View(inventory);
-        }
-
-        // GET: Inventory/Edit/5
-        public async Task<IActionResult> Edit(int? id)
-        {
-            if (id == null)
-            {
-                return NotFound();
-            }
-
-            var inventory = await _context.Inventories.FindAsync(id);
-            if (inventory == null)
-            {
-                return NotFound();
-            }
-            return View(inventory);
-        }
-
-        // POST: Inventory/Edit/5
-        // To protect from overposting attacks, enable the specific properties you want to bind to.
-        // For more details, see http://go.microsoft.com/fwlink/?LinkId=317598.
-        [HttpPost]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> Edit(int id, [Bind("Id,Material,Quantity,Price,TotalProfit")] Inventory inventory)
-        {
-            if (id != inventory.Id)
-            {
-                return NotFound();
-            }
-
-            if (ModelState.IsValid)
-            {
-                try
+            var items = await _context.Inventories
+                .Select(i => new
                 {
-                    _context.Update(inventory);
-                    await _context.SaveChangesAsync();
-                }
-                catch (DbUpdateConcurrencyException)
-                {
-                    if (!InventoryExists(inventory.Id))
-                    {
-                        return NotFound();
-                    }
-                    else
-                    {
-                        throw;
-                    }
-                }
-                return RedirectToAction(nameof(Index));
-            }
-            return View(inventory);
+                    id = i.Id,
+                    material = i.Material,
+                    quantity = i.Quantity,
+                    price = i.Price,
+                    total_profit = i.TotalProfit
+                })
+                .ToListAsync();
+
+            return Ok(items);
         }
 
-        // GET: Inventory/Delete/5
-        public async Task<IActionResult> Delete(int? id)
+        // POST: api/inventory
+        [HttpPost]
+        public async Task<IActionResult> CreateInventory([FromBody] CreateInventoryDto dto)
         {
-            if (id == null)
-            {
-                return NotFound();
-            }
+            if (dto == null)
+                return BadRequest("Invalid data.");
 
-            var inventory = await _context.Inventories
-                .FirstOrDefaultAsync(m => m.Id == id);
-            if (inventory == null)
+            var item = new Inventory
             {
-                return NotFound();
-            }
+                Material = dto.Material,
+                Quantity = dto.Quantity,
+                Price = dto.Price,
+                TotalProfit = dto.TotalProfit
+            };
 
-            return View(inventory);
+            _context.Inventories.Add(item);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Inventory item created successfully" });
         }
 
-        // POST: Inventory/Delete/5
-        [HttpPost, ActionName("Delete")]
-        [ValidateAntiForgeryToken]
-        public async Task<IActionResult> DeleteConfirmed(int id)
+        // PUT: api/inventory/{id}
+        [HttpPut("{id}")]
+        public async Task<IActionResult> UpdateInventory(int id, [FromBody] CreateInventoryDto dto)
         {
-            var inventory = await _context.Inventories.FindAsync(id);
-            if (inventory != null)
-            {
-                _context.Inventories.Remove(inventory);
-            }
+            var item = await _context.Inventories.FindAsync(id);
+
+            if (item == null)
+                return NotFound();
+
+            if (!string.IsNullOrEmpty(dto.Material)) item.Material = dto.Material;
+            item.Quantity = dto.Quantity;
+            item.Price = dto.Price;
+            item.TotalProfit = dto.TotalProfit;
 
             await _context.SaveChangesAsync();
-            return RedirectToAction(nameof(Index));
+
+            return Ok(new { message = "Inventory item updated successfully" });
         }
 
-        private bool InventoryExists(int id)
+        // DELETE: api/inventory/{id}
+        [HttpDelete("{id}")]
+        public async Task<IActionResult> DeleteInventory(int id)
         {
-            return _context.Inventories.Any(e => e.Id == id);
+            var item = await _context.Inventories.FindAsync(id);
+
+            if (item == null)
+                return NotFound();
+
+            _context.Inventories.Remove(item);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Inventory item deleted successfully" });
         }
     }
 }
