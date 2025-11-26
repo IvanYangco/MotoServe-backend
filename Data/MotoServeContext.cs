@@ -125,16 +125,14 @@ public partial class MotoServeContext : DbContext
         .HasColumnName("customer_id");
 
     entity.Property(e => e.Motorcycle)
-        .HasMaxLength(200)        // optional
-        .IsUnicode(false)         // optional
+        .HasMaxLength(200)        
+        .IsUnicode(false)         
         .HasColumnName("motorcycle");
 
     entity.Property(e => e.PlateNumber)
-        .HasMaxLength(50)         // optional
-        .IsUnicode(false)         // optional
+        .HasMaxLength(50)         
+        .IsUnicode(false)         
         .HasColumnName("plate_number");
-
- 
 });
 
 modelBuilder.Entity<MaintenanceSchedule>(entity =>
@@ -211,18 +209,16 @@ modelBuilder.Entity<MaintenanceHistory>(entity =>
             entity.Property(e => e.Lastname).HasMaxLength(100).IsUnicode(false).HasColumnName("lastname");
             entity.Property(e => e.PhoneNumber).HasMaxLength(50).IsUnicode(false).HasColumnName("phone_number");
             entity.Property(e => e.MotorExpertise).HasMaxLength(100).IsUnicode(false).HasColumnName("motor_expertise");
-            // entity.Property(e => e.ScheduleId).HasColumnName("schedule_id");
+            entity.Property(e => e.ScheduleId).HasColumnName("schedule_id");
             entity.HasOne<MaintenanceSchedule>()  // if you need relationship
             .WithMany()
-            // .HasForeignKey(e => e.ScheduleId)
+            .HasForeignKey(e => e.ScheduleId)
             .OnDelete(DeleteBehavior.Restrict);
 
 
             entity.HasOne(e => e.MechanicAccount)
-                .WithOne(a => a.Mechanic)
-                .HasForeignKey<MechanicAccount>(a => a.MechanicId)
-                .OnDelete(DeleteBehavior.Cascade)
-                .HasConstraintName("FK_Mechanic_MechanicAccount");
+                .WithOne(a => a.Mechanic);
+                
         });
         
 // // 🔹 MaintenanceHistory has NO ScheduleId anymore
@@ -279,6 +275,7 @@ modelBuilder.Entity<MaintenanceHistory>(entity =>
             entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)").HasColumnName("amount");
             entity.Property(e => e.PaymentStatus).HasMaxLength(50).IsUnicode(false).HasDefaultValue("Unpaid").HasColumnName("payment_status");
             entity.Property(e => e.MaintenanceId).HasColumnName("maintenance_id");
+            entity.Property(e => e.CustomerId).HasColumnName("customer_id");
             entity.Property(e => e.Due).HasColumnName("due");
 
             

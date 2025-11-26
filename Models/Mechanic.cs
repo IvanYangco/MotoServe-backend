@@ -11,15 +11,15 @@ public partial class Mechanic
     public string? PhoneNumber { get; set; }
     public string? MotorExpertise { get; set; }
 
-    // 👇 You just added this
-    // public int? ScheduleId { get; set; }  
+    
+     public int? ScheduleId { get; set; }  
 
     // public ICollection<MaintenanceSchedule>? MaintenanceSchedules { get; set; }
 
 
-    public virtual ICollection<MaintenanceHistory> MaintenanceHistories { get; set; } = new List<MaintenanceHistory>();
+    // public virtual ICollection<MaintenanceHistory> MaintenanceHistories { get; set; } = new List<MaintenanceHistory>();
 
-    public virtual ICollection<MaintenanceType> MaintenanceTypes { get; set; } = new List<MaintenanceType>();
+    // public virtual ICollection<MaintenanceType> MaintenanceTypes { get; set; } = new List<MaintenanceType>();
 
     public virtual MechanicAccount? MechanicAccount { get; set; }
 }

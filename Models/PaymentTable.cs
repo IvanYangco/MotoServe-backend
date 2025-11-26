@@ -16,6 +16,8 @@ public partial class PaymentTable
     public DateOnly Due { get; set; }
 
     public int? MaintenanceId { get; set; }
+    public int CustomerId { get; set; }
 
     public virtual MaintenanceHistory? Maintenance { get; set; }
+    public virtual Customer? Customer { get; set; }
 }
