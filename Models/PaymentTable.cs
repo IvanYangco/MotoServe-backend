@@ -5,7 +5,7 @@ namespace backend.Models;
 
 public partial class PaymentTable
 {
-    public int Id { get; set; }
+    public int PaymentId { get; set; }
 
     public string Invoice { get; set; } = null!;
 

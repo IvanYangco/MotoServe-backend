@@ -169,13 +169,16 @@ modelBuilder.Entity<MaintenanceHistory>(entity =>
     entity.Property(e => e.HistoryId).HasColumnName("history_id");
     entity.Property(e => e.CustomerId).HasColumnName("customer_id");
     entity.Property(e => e.MechanicId).HasColumnName("mechanic_id");
-    entity.Property(e => e.MaintenanceTypeId).HasColumnName("maintenance_type_id");
-    entity.Property(e => e.CustomerMotorcycleId).HasColumnName("customer_motorcycle_id");
+    entity.Property(e => e.MaintenanceId).HasColumnName("maintenance_id");
+    //entity.Property(e => e.CustomerMotorcycleId).HasColumnName("customer_motorcycle_id");
     entity.Property(e => e.ScheduleId).HasColumnName("schedule_id");
-    entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)").HasColumnName("amount");
+    entity.Property(e => e.PaymentId).HasColumnName("payment_id");
 
- 
+    entity.Property(e => e.Date).HasColumnName("date");
+    entity.Property(e => e.Time).HasColumnName("time");
+    entity.Property(e => e.Amount).HasColumnType("decimal(10,2)").HasColumnName("amount");
 });
+
 
 
         // MAINTENANCE TYPE
@@ -250,6 +253,7 @@ modelBuilder.Entity<MaintenanceHistory>(entity =>
     
 // });
 
+
         modelBuilder.Entity<MechanicAccount>(entity =>
         {
             entity.HasKey(e => e.Id);
@@ -267,10 +271,10 @@ modelBuilder.Entity<MaintenanceHistory>(entity =>
         // PAYMENT
         modelBuilder.Entity<PaymentTable>(entity =>
         {
-            entity.HasKey(e => e.Id);
+            entity.HasKey(e => e.PaymentId);
             entity.ToTable("PaymentTable");
 
-            entity.Property(e => e.Id).HasColumnName("id");
+            entity.Property(e => e.PaymentId).HasColumnName("payment_id");
             entity.Property(e => e.Invoice).HasMaxLength(100).IsUnicode(false).HasColumnName("invoice");
             entity.Property(e => e.Amount).HasColumnType("decimal(10, 2)").HasColumnName("amount");
             entity.Property(e => e.PaymentStatus).HasMaxLength(50).IsUnicode(false).HasDefaultValue("Unpaid").HasColumnName("payment_status");

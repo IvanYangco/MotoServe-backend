@@ -28,7 +28,7 @@ public async Task<IActionResult> GetPayments()
         .Include(p => p.Customer) // 👈 use navigation
         .Select(p => new
         {
-            id = p.Id,
+            id = p.PaymentId,
             invoice = p.Invoice,
             amount = p.Amount,
             paymentStatus = p.PaymentStatus,
